@@ -27,7 +27,7 @@ COLOR_QUANTIZATION=8 # use 7 colors + magenta for quantization.
 PREFIX=""
 VECTOR_FNAME="./vector.txt"
 DO_EQUALIZE=0 # set this to non-zero, to equalize gray scale version of input.
-VERBOSE=1
+VERBOSE=0
 
 VECTOR_FP=None
 
