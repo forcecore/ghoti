@@ -28,6 +28,7 @@ PREFIX=""
 VECTOR_FNAME="./vector.txt"
 VECTOR_FP=None
 DO_EQUALIZE=1 # set this to non-zero, to equalize gray scale version of input.
+VERBOSE=1
 
 
 
@@ -40,8 +41,13 @@ def extractFeature( fname, basename ):
 		exit( "Unable to load image " + fname )
 
 	# prepare a gray scale version
+	if VERBOSE:
+		print "Grayscaling"
 	gray = toGray( img )
+
 	if DO_EQUALIZE :
+		if VERBOSE:
+			print "Equalizing"
 		gray2 = copySize( gray, 1 )
 		cvEqualizeHist( gray, gray2 )
 		gray = gray2
@@ -50,9 +56,13 @@ def extractFeature( fname, basename ):
 	# make mask data: non-magenta area is considered "fish".
 	global PREFIX
 	PREFIX = TMP + "/" + basename
+	if VERBOSE:
+		print "Making mask"
 	mask_data = generateMask( img )
 
 	# try color quantization
+	if VERBOSE:
+		print "Quantizing Color"
 	pil = quantizeColor( img, COLOR_QUANTIZATION )
 	#pil.save( PREFIX+".quan.png" )
 	palette = getPalette( pil, COLOR_QUANTIZATION )
@@ -69,16 +79,22 @@ def extractFeature( fname, basename ):
 
 	# we run entropy calculation on quantized image.
 	# Afterall, we want to see the fish stripe pattern, not exact color!
+	if VERBOSE:
+		print "Calculating Entropy"
 	entropy = calcEntropy( gray, mask_data )
 	features.append( entropy )
 
 	# Try edge detection to extract pattern
+	if VERBOSE:
+		print "Detecting Edge"
 	edge = getEdge( gray )
 	#cvSaveImage( PREFIX+".edge.png", edge )
 	edge_cnt = countEdge( edge, mask_data )
 	features.append( edge_cnt )
 
 	# try to detect lines.
+	if VERBOSE:
+		print "Detecting Lines"
 	lines, line_storage = getLines( edge )
 	#debugDrawLines( img, edge, lines )
 	angle_count = countAngles( lines )
