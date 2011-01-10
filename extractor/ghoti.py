@@ -23,12 +23,13 @@ from cvlib import *
 ###
 OUT="./out"
 TMP="./tmp"
-COLOR_QUANTIZATION=8
+COLOR_QUANTIZATION=8 # use 7 colors + magenta for quantization.
 PREFIX=""
 VECTOR_FNAME="./vector.txt"
-VECTOR_FP=None
-DO_EQUALIZE=1 # set this to non-zero, to equalize gray scale version of input.
+DO_EQUALIZE=0 # set this to non-zero, to equalize gray scale version of input.
 VERBOSE=1
+
+VECTOR_FP=None
 
 
 
