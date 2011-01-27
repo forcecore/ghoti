@@ -44,9 +44,9 @@ sub min {
 
 sub HSV
 {
-	my $B = shift;
-	my $G = shift;
 	my $R = shift;
+	my $G = shift;
+	my $B = shift;
 	my $var_R = ( $R / 255 );
 	my $var_G = ( $G / 255 );
 	my $var_B = ( $B / 255 );
