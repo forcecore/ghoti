@@ -94,6 +94,14 @@ sub HSV
 	$S = int( $S*100+0.5 );
 	$V = int( $V*100+0.5 );
 
+	# For accuracy concern, let $H lie in [-180,180],
+	# rather than [0,360].
+	# I chose to do so after plotting h1 and h2
+	# (hue from 1st and 2nd order color.)
+	if( $H > 180 ) {
+		$H = $H - 360;
+	}
+
 	return ( $R, $G, $B, $H, $S, $V );
 	#return ( $R, $G, $G );
 	#return ( $H, $S, $V );
