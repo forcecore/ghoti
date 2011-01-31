@@ -23,13 +23,11 @@ from cvlib import *
 ###
 OUT="./out"
 TMP="./tmp"
-COLOR_QUANTIZATION=8 # use 7 colors + magenta for quantization.
+COLOR_QUANTIZATION=8
 PREFIX=""
 VECTOR_FNAME="./vector.txt"
-DO_EQUALIZE=0 # set this to non-zero, to equalize gray scale version of input.
-VERBOSE=0
-
 VECTOR_FP=None
+DO_EQUALIZE=1 # set this to non-zero, to equalize gray scale version of input.
 
 
 
@@ -42,13 +40,8 @@ def extractFeature( fname, basename ):
 		exit( "Unable to load image " + fname )
 
 	# prepare a gray scale version
-	if VERBOSE:
-		print "Grayscaling"
 	gray = toGray( img )
-
 	if DO_EQUALIZE :
-		if VERBOSE:
-			print "Equalizing"
 		gray2 = copySize( gray, 1 )
 		cvEqualizeHist( gray, gray2 )
 		gray = gray2
@@ -57,13 +50,9 @@ def extractFeature( fname, basename ):
 	# make mask data: non-magenta area is considered "fish".
 	global PREFIX
 	PREFIX = TMP + "/" + basename
-	if VERBOSE:
-		print "Making mask"
 	mask_data = generateMask( img )
 
 	# try color quantization
-	if VERBOSE:
-		print "Quantizing Color"
 	pil = quantizeColor( img, COLOR_QUANTIZATION )
 	#pil.save( PREFIX+".quan.png" )
 	palette = getPalette( pil, COLOR_QUANTIZATION )
@@ -80,22 +69,16 @@ def extractFeature( fname, basename ):
 
 	# we run entropy calculation on quantized image.
 	# Afterall, we want to see the fish stripe pattern, not exact color!
-	if VERBOSE:
-		print "Calculating Entropy"
 	entropy = calcEntropy( gray, mask_data )
 	features.append( entropy )
 
 	# Try edge detection to extract pattern
-	if VERBOSE:
-		print "Detecting Edge"
 	edge = getEdge( gray )
 	#cvSaveImage( PREFIX+".edge.png", edge )
 	edge_cnt = countEdge( edge, mask_data )
 	features.append( edge_cnt )
 
 	# try to detect lines.
-	if VERBOSE:
-		print "Detecting Lines"
 	lines, line_storage = getLines( edge )
 	#debugDrawLines( img, edge, lines )
 	angle_count = countAngles( lines )
@@ -433,6 +416,45 @@ def largestBlob( bin_img ):
 
 
 
+# process files given as list "files"
+def process_files( files ):
+	for fname in files:
+		# extract extension and run algorithm,
+		# only if it is a picture.
+		basename, extension = os.path.splitext( fname )
+		basename = os.path.basename( basename )
+		extension = extension.lower() # lowercase the extension to make JPG/Jpg/jPg/etc -> to jpg.
+
+		if extension == ".jpg" or \
+			extension == ".jpeg" or \
+			extension == ".bmp" or \
+			extension == ".gif" or \
+			extension == ".png":
+				print "processing " + fname
+				features = extractFeature( fname, basename )
+				print>>VECTOR_FP, basename, features
+		else:
+			print>>sys.stderr, "Warning: unsupported file \"" + fname + "\", skipping."
+
+
+
+# process dir. (non-recursive!)
+def process_dir( dirname ):
+	# make a list of files in dirname
+	# http://mayankjohri.wordpress.com/2008/07/02/create-list-of-files-in-a-dir-tree/
+	fileList = []
+	for root, subFolders, files in os.walk(dirname):
+		for file in files:
+			fileList.append( os.path.join(root,file) )
+	process_files( fileList )
+
+# read in list of files, written in a text file.
+def process_list( fname ):
+	f = open( fname, 'r' )
+	files = f.read().splitlines()
+	process_files( files )
+	f.close()
+
 ###
 ### the main function
 ###
@@ -440,26 +462,17 @@ def largestBlob( bin_img ):
 mkdirne( OUT )
 mkdirne( TMP )
 
-# make a list of files in input_dir
-input_dir = "./in"
-files=os.listdir( input_dir )
+fname = "./in" # set default fname.
+if len(sys.argv) > 1:
+	# if ran with some options...
+	fname = sys.argv[1]
+
+
 VECTOR_FP = open( VECTOR_FNAME, 'w' )
 
-# for each files in the list...
-for fname in files:
-	# extract extension and run algorithm,
-	# only if it is a picture.
-	basename, extension = os.path.splitext( fname )
-	extension = extension.lower() # lowercase the extension to make JPG/Jpg/jPg/etc -> to jpg.
-	if extension == ".jpg" or \
-		extension == ".jpeg" or \
-		extension == ".bmp" or \
-		extension == ".gif" or \
-		extension == ".png":
-			full_name = os.path.join( input_dir, fname )
-			print "processing " + full_name
-			features = extractFeature( full_name, basename )
-			print>>VECTOR_FP, basename, features
+if os.path.isdir( fname ):
+	process_dir( fname )
+else:
+	process_list( fname )
 
 VECTOR_FP.close()
-
